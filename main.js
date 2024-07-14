@@ -9,10 +9,10 @@ const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
-  1000
+  1000,
 );
-camera.position.z = 18;
-camera.position.y = -8;
+camera.position.z = 20;
+camera.position.y = -15;
 
 // Change background color of the scene to white
 scene.background = new THREE.Color("#575757");
@@ -61,7 +61,7 @@ function createCylinderWithGap(
   radiusBottom,
   height,
   radialSegments,
-  gapSize
+  gapSize,
 ) {
   // Create a standard cylinder geometry
   const geometry = new THREE.CylinderGeometry(
@@ -72,15 +72,14 @@ function createCylinderWithGap(
     1,
     false,
     0,
-    Math.PI * 2 - gapSize
+    Math.PI * 2 - gapSize,
   );
   geometry.rotateY(Math.PI / 2);
-
-  // No need to manually alter vertex positions since the geometry constructor parameters now handle the gap
   return geometry;
 }
+
 // Create the metallic electrodes made of 4 cylinders
-const electrodeGeometry = new THREE.CylinderGeometry(0.4, 0.4, 2, 64);
+const electrodeGeometry = new THREE.CylinderGeometry(0.4, 0.4, 2, 128);
 const gapSize = Math.PI / 8; // Gap size in radians
 const numCylinders = 4;
 const spaceBetween = 0.5; // Increased space between cylinders
@@ -98,8 +97,8 @@ for (let i = 0; i < numCylinders; i++) {
   let electrode;
   if (texts[i] === "2A" || texts[i] === "3A") {
     electrode = new THREE.Mesh(
-      createCylinderWithGap(0.4, 0.4, 2, 64, gapSize),
-      materialElectrode
+      createCylinderWithGap(0.4, 0.4, 2, 128, gapSize),
+      materialElectrode,
     );
   } else {
     electrode = new THREE.Mesh(electrodeGeometry, materialElectrode);
@@ -121,8 +120,9 @@ for (let i = 0; i < numCylinders; i++) {
   electrodeGroup.add(electrode);
   electrodes.push(electrode);
 }
+
 // Create the rounded end (capsule) at the bottom of the first cylinder
-const capsuleGeometry = new THREE.CapsuleGeometry(0.3, 15, 64, 64);
+const capsuleGeometry = new THREE.CapsuleGeometry(0.3, 15, 64, 128);
 const capsuleMaterial = new THREE.MeshPhongMaterial({
   color: 0xffffff,
   transparent: true,
@@ -158,24 +158,12 @@ const pointLight = new THREE.PointLight(0xffffff);
 pointLight.position.set(5, 5, 5);
 scene.add(pointLight);
 
-// Animation variables
-let direction = 1;
-const speed = 0.01;
+// Declare the rotateScene variable globally
 let rotateScene = false;
 
 // Animation loop
 function animate() {
   requestAnimationFrame(animate);
-
-  // Move the electrode group up and down
-  electrodeGroup.position.y += speed * direction;
-  if (electrodeGroup.position.y <= -14) {
-    direction = 1;
-  }
-  if (electrodeGroup.position.y >= -4) {
-    // Adjusted the range of motion
-    direction = -1;
-  }
 
   // Rotate the scene if rotateScene is true
   if (rotateScene) {
@@ -212,7 +200,7 @@ function onMouseClick(event) {
 
   if (intersects.length > 0) {
     const object = intersects.find(
-      (intersect) => !intersect.object.userData.isText
+      (intersect) => !intersect.object.userData.isText,
     ).object;
     const currentColor = object.material.color.getHex();
     let newColor;
@@ -226,8 +214,16 @@ function onMouseClick(event) {
     object.material.color.setHex(newColor);
   }
 }
+
 // Add event listener to the window
 window.addEventListener("click", onMouseClick);
+
+// Handle slider input
+const slider = document.getElementById("position-slider");
+slider.addEventListener("input", (event) => {
+  const position = parseFloat(event.target.value);
+  electrodeGroup.position.y = position;
+});
 
 // Add event listener to the rotate button
 document.getElementById("rotate-button").addEventListener("click", () => {
