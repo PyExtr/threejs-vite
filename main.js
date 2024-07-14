@@ -55,8 +55,33 @@ function createTextTexture(text) {
   return texture;
 }
 
+// Function to create a cylinder with a side gap, preserving the top and bottom faces
+function createCylinderWithGap(
+  radiusTop,
+  radiusBottom,
+  height,
+  radialSegments,
+  gapSize
+) {
+  // Create a standard cylinder geometry
+  const geometry = new THREE.CylinderGeometry(
+    radiusTop,
+    radiusBottom,
+    height,
+    radialSegments,
+    1,
+    false,
+    0,
+    Math.PI * 2 - gapSize
+  );
+  geometry.rotateY(Math.PI / 2);
+
+  // No need to manually alter vertex positions since the geometry constructor parameters now handle the gap
+  return geometry;
+}
 // Create the metallic electrodes made of 4 cylinders
-const electrodeGeometry = new THREE.CylinderGeometry(0.4, 0.4, 2, 32);
+const electrodeGeometry = new THREE.CylinderGeometry(0.4, 0.4, 2, 64);
+const gapSize = Math.PI / 8; // Gap size in radians
 const numCylinders = 4;
 const spaceBetween = 0.5; // Increased space between cylinders
 
@@ -69,7 +94,16 @@ for (let i = 0; i < numCylinders; i++) {
   const materialElectrode = new THREE.MeshPhongMaterial({
     color: 0x404040,
   });
-  const electrode = new THREE.Mesh(electrodeGeometry, materialElectrode);
+
+  let electrode;
+  if (texts[i] === "2A" || texts[i] === "3A") {
+    electrode = new THREE.Mesh(
+      createCylinderWithGap(0.4, 0.4, 2, 64, gapSize),
+      materialElectrode
+    );
+  } else {
+    electrode = new THREE.Mesh(electrodeGeometry, materialElectrode);
+  }
   electrode.position.y = i * (2 + spaceBetween);
 
   // Create text plane
@@ -80,14 +114,13 @@ for (let i = 0; i < numCylinders; i++) {
     depthTest: false,
   });
   const textPlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), textMaterial);
-  textPlane.position.set(0, 0, 0.51); // Slightly in front of the cylinder
+  textPlane.position.set(0, 0, 0.32); // Slightly in front of the cylinder
   textPlane.userData.isText = true; // Mark as text to ignore in raycaster
   electrode.add(textPlane);
 
   electrodeGroup.add(electrode);
   electrodes.push(electrode);
 }
-
 // Create the rounded end (capsule) at the bottom of the first cylinder
 const capsuleGeometry = new THREE.CapsuleGeometry(0.3, 15, 64, 64);
 const capsuleMaterial = new THREE.MeshPhongMaterial({
