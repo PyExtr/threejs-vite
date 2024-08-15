@@ -1,6 +1,16 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
+// Define the Labels object
+const Labels = {
+  // "1", "2A", "3A", "4"
+  FIRST: {text:"1", gap:false, position:0},
+  SECOND: {text:"2A", gap:true, position:1},
+  THIRD: {text:"3A", gap:true, position:2},
+  FOURTH: {text:"4", gap:false, position:3},
+  // FIFTH: {text:"7", gap:true, position:-1}
+};
+
 // Create the scene
 const scene = new THREE.Scene();
 
@@ -81,21 +91,20 @@ function createCylinderWithGap(
 // Create the metallic electrodes made of 4 cylinders
 const electrodeGeometry = new THREE.CylinderGeometry(0.4, 0.4, 2, 128);
 const gapSize = Math.PI / 8; // Gap size in radians
-const numCylinders = 4;
 const spaceBetween = 0.5; // Increased space between cylinders
 
 const electrodeGroup = new THREE.Group();
 const electrodes = [];
 
-const texts = ["1", "2A", "3A", "4"];
+// const texts = [Labels.FIRST, Labels.SECOND, Labels.THIRD, Labels.FOURTH];
 
-for (let i = 0; i < numCylinders; i++) {
+for (const label of Object.values(Labels)) {
   const materialElectrode = new THREE.MeshPhongMaterial({
     color: 0x404040,
   });
 
   let electrode;
-  if (texts[i] === "2A" || texts[i] === "3A") {
+  if (label.gap) {
     electrode = new THREE.Mesh(
       createCylinderWithGap(0.4, 0.4, 2, 128, gapSize),
       materialElectrode,
@@ -103,10 +112,10 @@ for (let i = 0; i < numCylinders; i++) {
   } else {
     electrode = new THREE.Mesh(electrodeGeometry, materialElectrode);
   }
-  electrode.position.y = i * (2 + spaceBetween);
+  electrode.position.y = label.position * (2 + spaceBetween);
 
   // Create text plane
-  const textTexture = createTextTexture(texts[i]);
+  const textTexture = createTextTexture(label.text);
   const textMaterial = new THREE.MeshBasicMaterial({
     map: textTexture,
     transparent: true,
